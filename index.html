@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>صاحبي عارفني؟ — اختبر صاحبك</title>
+  <meta name="description" content="اعمل اختبار عن نفسك، ابعته لأصحابك، وشوف مين فاهمك بجد." />
+  <meta name="theme-color" content="#101b36" />
+  <meta property="og:title" content="صاحبي عارفني؟" />
+  <meta property="og:description" content="اختبر صاحبك وشوف هو عارفك قد إيه!" />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="صاحبي عارفني؟">
+      <span class="brand-mark">VSOS</span><span class="brand-name">صاحبي <b>عارفني؟</b></span>
+    </a>
+    <nav class="top-actions" aria-label="إعدادات الموقع">
+      <button class="icon-btn" id="themeToggle" type="button" aria-label="تغيير الوضع"><svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M3 12h2m14 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg></button>
+      <button class="lang-btn" id="langToggle" type="button">EN</button>
+      <a class="text-btn" href="#dashboard" data-i18n="dashboard">لوحة التحكم</a>
+    </nav>
+  </header>
+
+  <main id="app" class="app-shell">
+    <section id="home" class="view active-view">
+      <div class="hero-wrap">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="dot"></span><span data-i18n="eyebrow">لأصحاب الدم الخفيف والذاكرة التقيلة</span></div>
+          <h1 data-i18n="heroTitle">اختبر صاحبك وشوف<br /><em>هو عارفك قد إيه!</em></h1>
+          <p class="hero-lede" data-i18n="heroLead">حوّل الحكايات والـ inside jokes لاختبار صغير. اعمل كويز باسمك، ابعته، وسيب الإجابات تقول مين فاهمك بجد.</p>
+          <div class="hero-cta-row"><a class="btn btn-primary" href="#create" data-i18n="makeQuiz">اعمل اختبارك <span>←</span></a><a class="btn btn-ghost" href="#answer" data-i18n="answerQuiz">جاوب على اختبار صاحبك</a></div>
+          <div class="privacy-note"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.9 8.7 7 10 4.1-1.3 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg><span data-i18n="privacyNote">إجاباتك الخاصة تفضل خاصة — إحنا بنعرض النتيجة بس.</span></div>
+        </div>
+        <div class="hero-art" aria-label="بطاقة اختبار الأصدقاء" role="img">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="floating-card card-back card-back-a"><span>03</span><b>ذكرياتنا</b></div>
+          <div class="floating-card card-back card-back-b"><span>07</span><b>فاكرني؟</b></div>
+          <div class="quiz-ticket"><div class="ticket-top"><span class="mini-logo">VSOS</span><span class="ticket-label">QUIZ / 01</span></div><div class="ticket-avatar">ص</div><strong>مين يعرفني أكتر؟</strong><p>جاوب على 10 أسئلة عن سارة</p><div class="ticket-progress"><span></span></div><div class="ticket-bottom"><span>صاحبي عارفني؟</span><span>→</span></div></div>
+          <div class="sticker">بجد؟<br /><span>فاكرني!</span></div>
+        </div>
+      </div>
+      <section class="category-section"><div class="section-heading"><div><span class="section-kicker" data-i18n="questionLibrary">مكتبة الأسئلة</span><h2 data-i18n="categoryTitle">اختار الجو اللي شبهكم</h2></div><span class="question-count">100+ <small data-i18n="questions">سؤال</small></span></div><div class="category-grid" id="categoryGrid"></div></section>
+      <section class="how-section"><div class="section-heading"><div><span class="section-kicker" data-i18n="simple">بسيطة وسريعة</span><h2 data-i18n="howTitle">من أول سؤال لحد الضحكة</h2></div></div><div class="steps"><article><span>01</span><h3 data-i18n="step1Title">اعمل كويزك</h3><p data-i18n="step1Text">اكتب اسمك واختار أسئلة تكشف أصحابك على حقيقتهم.</p></article><article><span>02</span><h3 data-i18n="step2Title">ابعت اللينك</h3><p data-i18n="step2Text">شارك اللينك على واتساب وسيبهم يثبتوا نفسهم.</p></article><article><span>03</span><h3 data-i18n="step3Title">شوف النتيجة</h3><p data-i18n="step3Text">اعرف مين فاهمك، وشارك كارت النتيجة اللي يليق بكم.</p></article></div></section>
+    </section>
+
+    <section id="create" class="view"><div class="page-head"><a href="#home" class="back-link">→ <span data-i18n="backHome">الرئيسية</span></a><span class="step-label" id="createStepLabel">STEP 01 / 03</span><h1 data-i18n="createTitle">اعمل اختبارك</h1><p data-i18n="createLead">ابدأ باسمك، وبعدها خلّي الأسئلة تحكي عنك.</p></div><div id="createPanel" class="panel"></div></section>
+    <section id="answer" class="view"><div class="page-head"><a href="#home" class="back-link">→ <span data-i18n="backHome">الرئيسية</span></a><span class="step-label">FRIEND MODE</span><h1 data-i18n="answerTitle">جاوب على اختبار صاحبك</h1><p data-i18n="answerLead">حط لينك الاختبار اللي وصلك وابدأ التحدي.</p></div><div id="answerPanel" class="panel"></div></section>
+    <section id="quiz" class="view"><div id="quizPanel" class="panel"></div></section>
+    <section id="results" class="view"><div id="resultsPanel" class="panel"></div></section>
+    <section id="dashboard" class="view"><div class="page-head"><a href="#home" class="back-link">→ <span data-i18n="backHome">الرئيسية</span></a><span class="step-label">PRIVATE SPACE</span><h1 data-i18n="dashboardTitle">لوحة تحكمك</h1><p data-i18n="dashboardLead">كل اختباراتك وردود أصحابك في مكان واحد.</p></div><div id="dashboardPanel" class="panel"></div></section>
+  </main>
+  <footer><span>Created by <b>VSOS</b></span><a href="https://vsos.example" target="_blank" rel="noreferrer">vsos.example ↗</a><span>© 2026</span></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /quizzes/{quizId} {
+      allow read: if resource.data.active == true;
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+    }
+    match /quizPrivate/{quizId} {
+      allow read, write: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+    }
+    match /submissions/{submissionId} {
+      allow read, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+      allow write: if false;
+    }
+    match /leaderboards/{quizId}/entries/{entryId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
