@@ -4,7 +4,7 @@ A bilingual, Arabic-first friends quiz platform by VSOS. The frontend is plain H
 
 ## What is included
 
-The home page is Egyptian Arabic RTL by default with a live English switch, dark mode, category library, 105 built-in questions, custom questions, quiz creation, private creator answer keys, unique links, friend answering flow, progress controls, review screen, scoring, answer comparison, result sharing, WhatsApp links, PNG result cards, and a creator dashboard. Public quiz documents intentionally omit creator answers. The Cloud Function is the only production scoring path; it reads the private answer key on the server and writes only the submitter's own result plus a non-sensitive leaderboard entry.
+The home page is Egyptian Arabic RTL by default with a live English switch, dark mode, category library, 105 built-in questions, custom questions, quiz creation, private creator answer keys, unique links plus a six-digit join code, friend answering flow, progress controls, review screen, scoring, answer comparison, result sharing, WhatsApp links, PNG result cards, and a creator dashboard. Creators see the six-digit code immediately after publishing; friends can enter the code from the homepage instead of opening a URL, and Firebase lookup resolves the code across devices. Public quiz documents intentionally omit creator answers. The Cloud Function is the only production scoring path; it reads the private answer key on the server and writes only the submitter's own result plus a non-sensitive leaderboard entry.
 
 ## Run locally
 
