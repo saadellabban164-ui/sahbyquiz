@@ -14,6 +14,10 @@ service cloud.firestore {
       allow read, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
       allow write: if false;
     }
+    match /publicResults/{resultId} {
+      allow read: if true;
+      allow write: if false;
+    }
     match /leaderboards/{quizId}/entries/{entryId} {
       allow read: if true;
       allow write: if false;

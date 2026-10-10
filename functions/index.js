@@ -16,7 +16,7 @@ function summarySvg(quiz, rows) {
 }
 
 exports.submitQuiz = onCall({ region: 'us-central1', enforceAppCheck: true }, async (request) => {
-  const { quizId, friendName, answers, deviceKey, mode, teacherEmail } = request.data || {};
+  const { quizId, friendName, answers, deviceKey } = request.data || {};
   if (!quizId || !friendName || !answers || typeof answers !== 'object' || !deviceKey) throw new HttpsError('invalid-argument', 'Missing quiz submission fields.');
   const quizSnap = await db.doc(`quizzes/${quizId}`).get();
   const privateSnap = await db.doc(`quizPrivate/${quizId}`).get();
@@ -36,8 +36,9 @@ exports.submitQuiz = onCall({ region: 'us-central1', enforceAppCheck: true }, as
   const submission = { quizId, ownerUid: privateQuiz.ownerUid, deviceKey, friendName: String(friendName).slice(0, 80), score, total, percentage, detail, createdAt: FieldValue.serverTimestamp() };
   const submissionRef = await db.collection('submissions').add(submission);
   await db.doc(`leaderboards/${quizId}/entries/${submissionRef.id}`).set({ friendName: submission.friendName, score, total, percentage, createdAt: FieldValue.serverTimestamp() });
-  if ((mode || quiz.mode) === 'teacher' && (teacherEmail || quiz.teacherEmail)) {
-    await db.collection('reportJobs').add({ quizId, ownerUid: privateQuiz.ownerUid, email: teacherEmail || quiz.teacherEmail, dueAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000), status: 'pending', createdAt: FieldValue.serverTimestamp() });
+  await db.doc(`publicResults/${submissionRef.id}`).set({ quizId, creatorName: quiz.creatorName, title: quiz.title, friendName: submission.friendName, score, total, percentage, detail: detail.map(({ question, friend, match, auto }) => ({ question, friend, match, auto })), createdAt: FieldValue.serverTimestamp() });
+  if ((privateQuiz.mode || quiz.mode) === 'teacher' && privateQuiz.teacherEmail) {
+    await db.collection('reportJobs').add({ quizId, ownerUid: privateQuiz.ownerUid, email: privateQuiz.teacherEmail, dueAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000), status: 'pending', createdAt: FieldValue.serverTimestamp() });
   }
   return { submissionId: submissionRef.id, score, total, percentage, detail };
 });
