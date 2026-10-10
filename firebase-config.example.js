@@ -1,5 +1,5 @@
 // Copy to firebase-config.js and replace values from Firebase Console.
-// This file contains browser-safe project identifiers, never admin credentials.
+// This file contains browser-safe Firebase identifiers only.
 export const firebaseConfig = {
   apiKey: "REPLACE_ME",
   authDomain: "YOUR_PROJECT.firebaseapp.com",

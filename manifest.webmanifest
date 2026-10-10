@@ -1,0 +1,12 @@
+{
+  "name": "صاحبي عارفني؟",
+  "short_name": "صاحبي عارفني",
+  "description": "اختبارات الأصحاب، المدارس والعلاقات",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#101b36",
+  "theme_color": "#101b36",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [{"src":"logo.png","sizes":"1254x1254","type":"image/png","purpose":"any maskable"}]
+}

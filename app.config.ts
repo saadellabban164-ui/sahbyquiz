@@ -1,3 +1,3 @@
 export default {
-  logoUrl: "https://github.com/saadellabban164-ui/sahbyquiz/raw/main/brand-mark.svg"
+  logoUrl: "https://raw.githubusercontent.com/saadellabban164-ui/sahbyquiz/main/logo.png"
 };

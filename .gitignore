@@ -1,0 +1,6 @@
+firebase-config.js
+.firebaserc
+functions/node_modules/
+node_modules/
+.env
+.env.*

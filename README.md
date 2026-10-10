@@ -1,54 +1,54 @@
 # صاحبي عارفني؟ — How Well Do You Know Me?
 
-A bilingual, Arabic-first friends quiz platform by VSOS. The frontend is plain HTML/CSS/vanilla JavaScript and is designed to publish on GitHub Pages. The production data layer is Firebase Authentication (anonymous sign-in), Cloud Firestore, and a callable Cloud Function that scores answers server-side and writes a public leaderboard projection.
+تطبيق اختبارات عربي أولًا للأصحاب والمدرسين والمرتبطين. الواجهة HTML/CSS/JavaScript وتعمل كتطبيق PWA قابل للتثبيت، وطبقة الإنتاج Firebase Authentication وFirestore وCloud Functions وFirebase Hosting.
 
-## What is included
+## المزايا الجديدة
 
-The home page is Egyptian Arabic RTL by default with a live English switch, dark mode, category library, 105 built-in questions, custom questions, quiz creation, private creator answer keys, unique links plus a six-digit join code, friend answering flow, progress controls, review screen, scoring, answer comparison, result sharing, WhatsApp links, PNG result cards, and a creator dashboard. Creators see the six-digit code immediately after publishing; friends can enter the code from the homepage instead of opening a URL, and Firebase lookup resolves the code across devices. Public quiz documents intentionally omit creator answers. The Cloud Function is the only production scoring path; it reads the private answer key on the server and writes only the submitter's own result plus a non-sensitive leaderboard entry.
+يمكن إنشاء الاختبار بثلاثة أوضاع: أصحاب، اختبار علاقة، أو مدرس وطلاب. في وضع المدرس يكتب المدرس إيميله، وكل طالب يكتب اسمه ويحل مرة واحدة من الجهاز نفسه. بعد 24 ساعة تنشئ الوظيفة المجدولة صورة PNG بتقرير النتائج وترسلها إلى إيميل المدرس من خلال Resend. الكود البرمجي يمنع التكرار محليًا وبسجل `deviceKey` على الخادم؛ هذا يمنع إعادة الدخول من نفس المتصفح/الجهاز، مع العلم أن أي نظام متصفح لا يستطيع إثبات هوية جهاز ماديًا بنسبة 100% إذا تم مسح بياناته.
 
-## Run locally
+يوجد دخول اختياري بالبريد وكلمة المرور عبر Firebase Authentication. من غير حساب، يظل إنشاء وحل الاختبارات متاحًا. الحساب يساعد صاحب الاختبار على الوصول إلى إدارته من أجهزة مختلفة. الشعار المستخدم هو الصورة المرفقة داخل `logo.png`، ولا يوجد رابط `vsos.example` في التذييل.
 
-```bash
-python3 -m http.server 3000
-# open http://localhost:3000
-```
+## تشغيل Firebase Hosting
 
-The app has a browser-only fallback so the UI and complete journey can be exercised before Firebase is configured. That fallback is local to the current browser and is not a replacement for production Firebase persistence.
-
-## Connect Firebase for real cross-device persistence
-
-1. Create a Firebase project and enable **Authentication → Anonymous**.
-2. Create a Firestore database in production mode.
-3. Copy `firebase-config.example.js` to `firebase-config.js` and replace the browser-safe values from Firebase Console. Never place admin SDK credentials in this file.
-4. Install the Firebase CLI and select the project:
+1. أنشئ مشروعًا في Firebase Console.
+2. فعّل Authentication: Anonymous وEmail/Password، وأنشئ Firestore.
+3. انسخ `firebase-config.example.js` إلى `firebase-config.js` وضع قيم المشروع العامة.
+4. انسخ `.firebaserc.example` إلى `.firebaserc` واستبدل `YOUR_FIREBASE_PROJECT_ID` بمعرّف المشروع.
+5. ثبّت CLI وسجّل الدخول:
 
 ```bash
 npm install -g firebase-tools
 firebase login
-firebase use YOUR_PROJECT_ID
-firebase deploy --only firestore:rules,functions
+firebase use YOUR_FIREBASE_PROJECT_ID
+npm install --prefix functions
+firebase deploy --only hosting,firestore:rules,functions
 ```
 
-5. Publish the frontend after `firebase-config.js` is present. Because `firebase-config.js` contains only public client identifiers, it may be shipped to GitHub Pages; the Firestore rules and Cloud Function protect the private answer key and submissions.
+سيكون الموقع على `https://YOUR_FIREBASE_PROJECT_ID.web.app`، والروابط القصيرة ستكون بصيغة `?q=quiz_id` بدل وضع بيانات الاختبار الطويلة داخل الرابط. كود الدخول المكون من 6 أرقام يظل متاحًا أيضًا.
 
-## Data model and access control
+## تقرير المدرس بعد 24 ساعة
 
-`quizzes/{quizId}` contains the public title, creator display name, questions without answers, active state, and owner UID. `quizPrivate/{quizId}` contains the owner UID, owner token, and answer map and is owner-only. `submissions/{submissionId}` is written by the callable function and readable/deletable only by the owner. `leaderboards/{quizId}/entries/{entryId}` contains only a display name, score, percentage, and timestamp and is public-read. See `firestore.rules` and `functions/index.js`.
+وظيفة `sendTeacherReports` تعمل كل 15 دقيقة وتبحث عن التقارير المستحقة. قبل نشر Functions، أضف إعدادات Resend الآمنة:
 
-For a stronger production posture, enable Firebase App Check, add a custom email link or Google provider, and use Firebase Hosting or a Cloud Function endpoint if you need server-rendered social preview cards. GitHub Pages can still host this client application.
+```bash
+firebase functions:secrets:set RESEND_API_KEY
+firebase functions:config:set reports.from_email="reports@your-domain.com"
+```
 
-## GitHub Pages
+أو استخدم متغيرات البيئة في بيئة Functions، مع تفعيل دومين إرسال موثّق في Resend. لا تضع مفتاح Resend في ملفات الواجهة. الوظيفة ترسل صورة `quiz-report.png` فيها المتوسط وقائمة الطلاب ودرجاتهم.
 
-This repository is a static site: keep the source files at the repository root, enable **Settings → Pages → Deploy from branch → main / root**, and the site will be available at `https://YOUR_GITHUB_USERNAME.github.io/REPOSITORY_NAME/`. The single-page app uses hash navigation, so it works without server rewrite rules.
+## الحماية والإدارة
 
-## Test journey
+`quizzes` عام للقراءة إذا كان الاختبار فعالًا، بينما `quizPrivate` يحتوي إجابات المنشئ ولا يقرأه إلا المالك. `submissions` و`reportJobs` للمالك فقط. وظيفة الإرسال هي المسار الوحيد لكتابة النتيجة، وتتحقق من عدم وجود `deviceKey` سبق استخدامه لنفس الاختبار. فعّل App Check من Firebase Console قبل الإنتاج؛ الدالة تستخدم `enforceAppCheck`.
 
-1. Open the home page and choose **اعمل اختبارك**.
-2. Enter a creator name, select at least five questions, enter private answers, and publish.
-3. Copy the generated link, open it in a new private window, enter a friend name, answer every question, review, and submit.
-4. Confirm the result percentage, answer comparison, WhatsApp link, PNG download, and leaderboard entry.
-5. Return to the creator browser and open **لوحة التحكم** to see the quiz and local submissions. With Firebase configured, verify the owner-only dashboard query and Firestore documents.
+## فحص محلي
 
-## Brand
+```bash
+python3 -m http.server 3000
+```
 
-Footer attribution: **Created by VSOS**. Replace the placeholder VSOS link in `index.html` with the official destination before launch.
+ثم افتح `http://localhost:3000`. وضع المتصفح المحلي يحفظ البيانات في المتصفح فقط حتى يتم ربط Firebase.
+
+## النشر البديل
+
+يوجد Workflow لـ GitHub Pages كنسخة احتياطية، لكن **Firebase Hosting هو المسار الموصى به** لأنه يعمل مباشرة مع Firestore وFunctions والروابط القصيرة.
