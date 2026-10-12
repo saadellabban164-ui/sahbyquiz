@@ -1,5 +1,5 @@
 const CACHE = 'sahbyquiz-v6';
-const SHELL = ['./', './index.html', './styles.css?v=20261018', './app.js?v=20261018', './firebase-config.js', './manifest.webmanifest', './logo.png'];
+const SHELL = ['./', './index.html', './styles.css?v=20261019', './app.js?v=20261019', './firebase-config.js', './manifest.webmanifest', './logo.png'];
 
 self.addEventListener('install', event => {
   self.skipWaiting();

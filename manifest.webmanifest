@@ -2,7 +2,7 @@
   "name": "صاحبي عارفني؟",
   "short_name": "صاحبي عارفني",
   "description": "اختبارات الأصحاب، المدارس والعلاقات",
-  "start_url": "./",
+  "start_url": "./?v=20261019",
   "display": "standalone",
   "background_color": "#101b36",
   "theme_color": "#101b36",

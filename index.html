@@ -14,22 +14,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261018" />
+  <link rel="stylesheet" href="styles.css?v=20261019" />
   <script>
     (function () {
       if (!('serviceWorker' in navigator)) return;
-      var reloadKey = 'sahbyquiz-update-reloaded-v6';
-      navigator.serviceWorker.addEventListener('controllerchange', function () {
-        if (sessionStorage.getItem(reloadKey)) return;
-        sessionStorage.setItem(reloadKey, '1');
-        window.location.reload();
-      });
-      navigator.serviceWorker.register('./sw.js?v=20261018', { updateViaCache: 'none' }).then(function (registration) {
-        registration.update();
-      }).catch(function () {});
+      var cleanupKey = 'sahbyquiz-clean-browser-v1';
+      if (localStorage.getItem(cleanupKey)) return;
+      localStorage.setItem(cleanupKey, '1');
+      Promise.all([
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          return Promise.all(registrations.map(function (registration) { return registration.unregister(); }));
+        }),
+        window.caches ? caches.keys().then(function (keys) { return Promise.all(keys.map(function (key) { return caches.delete(key); })); }) : Promise.resolve()
+      ]).finally(function () { window.location.reload(); });
     }());
   </script>
-  <script type="module" src="app.js?v=20261018"></script>
+  <script type="module" src="app.js?v=20261019"></script>
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
