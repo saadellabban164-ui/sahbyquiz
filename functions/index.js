@@ -7,56 +7,10 @@ const sharp = require('sharp');
 initializeApp();
 const db = getFirestore();
 const resendApiKey = defineSecret('RESEND_API_KEY');
-
-function summarySvg(quiz, rows) {
-  const escaped = (value) => String(value || '').replace(/[<&>]/g, c => ({'<':'&lt;','&':'&amp;','>':'&gt;'}[c]));
-  const average = rows.length ? Math.round(rows.reduce((sum, r) => sum + (r.percentage || 0), 0) / rows.length) : 0;
-  const people = rows.slice(0, 12).map((r, i) => `<text x="90" y="${210 + i * 30}" font-family="Arial" font-size="18" fill="#101b36">${i + 1}. ${escaped(r.friendName)} — ${r.percentage}%</text>`).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="#fffdf8"/><rect width="1200" height="150" fill="#101b36"/><text x="70" y="92" font-family="Arial" font-size="40" font-weight="bold" fill="#f4b942">صاحبي عارفني؟ / تقرير الاختبار</text><text x="70" y="195" font-family="Arial" font-size="24" font-weight="bold" fill="#101b36">${escaped(quiz.title)}</text><text x="850" y="195" font-family="Arial" font-size="24" fill="#ff806d">المتوسط: ${average}%</text>${people || '<text x="90" y="250" font-family="Arial" font-size="22" fill="#68728a">لا توجد إجابات حتى الآن</text>'}<text x="70" y="740" font-family="Arial" font-size="18" fill="#68728a">تقرير آلي بعد 24 ساعة — نتائج الطلاب وأسمائهم</text></svg>`;
-}
-
-exports.submitQuiz = onCall({ region: 'us-central1', enforceAppCheck: true }, async (request) => {
-  const { quizId, friendName, answers, deviceKey } = request.data || {};
-  if (!quizId || !friendName || !answers || typeof answers !== 'object' || !deviceKey) throw new HttpsError('invalid-argument', 'Missing quiz submission fields.');
-  const quizSnap = await db.doc(`quizzes/${quizId}`).get();
-  const privateSnap = await db.doc(`quizPrivate/${quizId}`).get();
-  if (!quizSnap.exists || !privateSnap.exists || quizSnap.data().active === false) throw new HttpsError('not-found', 'Quiz not found or closed.');
-  const quiz = quizSnap.data(); const privateQuiz = privateSnap.data();
-  const duplicate = await db.collection('submissions').where('quizId', '==', quizId).where('deviceKey', '==', deviceKey).limit(1).get();
-  if (!duplicate.empty) throw new HttpsError('already-exists', 'This device already submitted this quiz.');
-  const detail = (quiz.questions || []).map((question) => {
-    const friend = String(answers[question.id] || '').trim();
-    const creator = String((privateQuiz.answers || {})[question.id] || '').trim();
-    const match = Boolean(friend && creator && friend.toLocaleLowerCase() === creator.toLocaleLowerCase());
-    return { question: question.q, friend, creator: creator || 'إجابة شخصية', match, auto: question.type !== 'short' };
-  });
-  const score = detail.filter(item => item.match).length;
-  const total = detail.length;
-  const percentage = total ? Math.round(score / total * 100) : 0;
-  const submission = { quizId, ownerUid: privateQuiz.ownerUid, deviceKey, friendName: String(friendName).slice(0, 80), score, total, percentage, detail, createdAt: FieldValue.serverTimestamp() };
-  const submissionRef = await db.collection('submissions').add(submission);
-  await db.doc(`leaderboards/${quizId}/entries/${submissionRef.id}`).set({ friendName: submission.friendName, score, total, percentage, createdAt: FieldValue.serverTimestamp() });
-  await db.doc(`publicResults/${submissionRef.id}`).set({ quizId, creatorName: quiz.creatorName, title: quiz.title, friendName: submission.friendName, score, total, percentage, detail: detail.map(({ question, friend, match, auto }) => ({ question, friend, match, auto })), createdAt: FieldValue.serverTimestamp() });
-  if ((privateQuiz.mode || quiz.mode) === 'teacher' && privateQuiz.teacherEmail) {
-    await db.collection('reportJobs').add({ quizId, ownerUid: privateQuiz.ownerUid, email: privateQuiz.teacherEmail, dueAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000), status: 'pending', createdAt: FieldValue.serverTimestamp() });
-  }
-  return { submissionId: submissionRef.id, score, total, percentage, detail };
-});
-
-exports.sendTeacherReports = onSchedule({ schedule: 'every 15 minutes', timeZone: 'Africa/Cairo', region: 'us-central1', secrets: [resendApiKey] }, async () => {
-  const jobs = await db.collection('reportJobs').where('status', '==', 'pending').where('dueAt', '<=', Timestamp.now()).limit(20).get();
-  for (const jobDoc of jobs.docs) {
-    const job = jobDoc.data();
-    try {
-      const quizSnap = await db.doc(`quizzes/${job.quizId}`).get();
-      const submissions = await db.collection('submissions').where('quizId', '==', job.quizId).orderBy('createdAt', 'asc').get();
-      const rows = submissions.docs.map(d => d.data());
-      const png = await sharp(Buffer.from(summarySvg(quizSnap.data() || {}, rows))).png().toBuffer();
-      const apiKey = resendApiKey.value();
-      if (!apiKey) throw new Error('RESEND_API_KEY is not configured');
-      const response = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: process.env.REPORT_FROM_EMAIL || 'reports@your-domain.com', to: [job.email], subject: `تقرير اختبار ${quizSnap.data()?.title || ''}`, html: '<p>مرفق تقرير نتائج الاختبار بعد 24 ساعة.</p>', attachments: [{ filename: 'quiz-report.png', content: png.toString('base64') }] }) });
-      if (!response.ok) throw new Error(`Resend ${response.status}`);
-      await jobDoc.ref.update({ status: 'sent', sentAt: FieldValue.serverTimestamp() });
-    } catch (error) { await jobDoc.ref.update({ status: 'error', lastError: String(error.message), attempts: FieldValue.increment(1) }); }
-  }
-});
+function validRealName(value){const parts=String(value||'').trim().split(/\s+/).filter(Boolean);return parts.length>=2&&parts.every(p=>/^[\u0600-\u06FFa-zA-Z][\u0600-\u06FFa-zA-Z'’-]{1,}$/.test(p))&&!/(.)\1\1/.test(String(value));}
+function validTopicResponse(topic,response){const text=String(response||'').trim();if(text.length<20||text.split(/\s+/).filter(Boolean).length<4)return false;const tokens=String(topic||'').toLocaleLowerCase().split(/\s+/).map(x=>x.replace(/[^\u0600-\u06FFa-z0-9]/gi,'')).filter(x=>x.length>=4);return tokens.length<2||tokens.some(t=>text.toLocaleLowerCase().includes(t));}
+function escapeXml(v){return String(v||'').replace(/[<&>"']/g,c=>({'<':'&lt;','&':'&amp;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
+function reportSvg(quiz,rows){const survey=quiz.mode==='survey';const body=rows.slice(0,18).map((r,i)=>survey?`<text x="70" y="${190+i*31}" font-family="Arial" font-size="18" fill="#101b36">${i+1}. ${escapeXml(r.respondentName)}: ${escapeXml(String(r.response||'').slice(0,100))}</text>`:`<text x="70" y="${190+i*31}" font-family="Arial" font-size="18" fill="#101b36">${i+1}. ${escapeXml(r.friendName)} — ${r.percentage||0}%</text>`).join('');return `<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="850"><rect width="1400" height="850" fill="#fffdf8"/><rect width="1400" height="130" fill="#101b36"/><text x="60" y="82" font-family="Arial" font-size="38" font-weight="bold" fill="#f4b942">صاحبي عارفني؟ / ${escapeXml(quiz.title)}</text><text x="60" y="170" font-family="Arial" font-size="22" fill="#68728a">${survey?'Survey responses':'Quiz submissions'}: ${rows.length}</text>${body||'<text x="70" y="230" font-family="Arial" font-size="22" fill="#68728a">No responses yet</text>'}<text x="60" y="810" font-family="Arial" font-size="18" fill="#68728a">Automatic report after 24 hours.</text></svg>`;}
+exports.submitQuiz=onCall({region:'us-central1'},async request=>{const {quizId,friendName,answers,deviceKey}=request.data||{};if(!quizId||!friendName||!answers||typeof answers!=='object'||!deviceKey)throw new HttpsError('invalid-argument','Missing quiz submission fields.');const quizSnap=await db.doc(`quizzes/${quizId}`).get();const privateSnap=await db.doc(`quizPrivate/${quizId}`).get();if(!quizSnap.exists||!privateSnap.exists||quizSnap.data().active===false)throw new HttpsError('not-found','Quiz not found or closed.');const quiz=quizSnap.data(),privateQuiz=privateSnap.data();const duplicate=await db.collection('submissions').where('quizId','==',quizId).where('deviceKey','==',deviceKey).limit(1).get();if(!duplicate.empty)throw new HttpsError('already-exists','This device already submitted this quiz.');const detail=(quiz.questions||[]).map(q=>{const friend=String(answers[q.id]||'').trim(),creator=String((privateQuiz.answers||{})[q.id]||'').trim(),match=Boolean(friend&&creator&&friend.toLocaleLowerCase()===creator.toLocaleLowerCase());return {question:q.q,friend,creator:creator||'إجابة شخصية',match,auto:q.type!=='short'};});const score=detail.filter(x=>x.match).length,total=detail.length,percentage=total?Math.round(score/total*100):0;const submission={quizId,ownerUid:privateQuiz.ownerUid,deviceKey,friendName:String(friendName).slice(0,80),score,total,percentage,detail,createdAt:FieldValue.serverTimestamp()};const ref=await db.collection('submissions').add(submission);await db.doc(`leaderboards/${quizId}/entries/${ref.id}`).set({friendName:submission.friendName,score,total,percentage,createdAt:FieldValue.serverTimestamp()});if((privateQuiz.mode||quiz.mode)==='teacher'&&privateQuiz.teacherEmail)await db.collection('reportJobs').add({quizId,ownerUid:privateQuiz.ownerUid,email:privateQuiz.teacherEmail,mode:'teacher',dueAt:Timestamp.fromMillis(Date.now()+86400000),status:'pending',createdAt:FieldValue.serverTimestamp()});return {submissionId:ref.id,score,total,percentage,detail};});
+exports.submitSurvey=onCall({region:'us-central1'},async request=>{const {quizId,respondentName,response,deviceKey}=request.data||{};if(!quizId||!deviceKey||!validRealName(respondentName)||!validTopicResponse('',response))throw new HttpsError('invalid-argument','Enter a real full name and a meaningful response.');const quizSnap=await db.doc(`quizzes/${quizId}`).get(),privateSnap=await db.doc(`quizPrivate/${quizId}`).get();if(!quizSnap.exists||!privateSnap.exists||quizSnap.data().active===false||quizSnap.data().mode!=='survey')throw new HttpsError('not-found','Survey not found or closed.');const quiz=quizSnap.data();if(!validTopicResponse(quiz.title,response))throw new HttpsError('invalid-argument','Your response must be about the topic.');const duplicate=await db.collection('submissions').where('quizId','==',quizId).where('deviceKey','==',deviceKey).limit(1).get();if(!duplicate.empty)throw new HttpsError('already-exists','This device already submitted this survey.');const ownerUid=privateSnap.data().ownerUid;await db.collection('submissions').add({quizId,ownerUid,deviceKey,respondentName:String(respondentName).trim().slice(0,100),response:String(response).trim().slice(0,4000),mode:'survey',createdAt:FieldValue.serverTimestamp()});if(privateSnap.data().teacherEmail)await db.collection('reportJobs').add({quizId,ownerUid,email:privateSnap.data().teacherEmail,mode:'survey',dueAt:Timestamp.fromMillis(Date.now()+86400000),status:'pending',createdAt:FieldValue.serverTimestamp()});return {accepted:true};});
+exports.sendTeacherReports=onSchedule({schedule:'every 15 minutes',timeZone:'Africa/Cairo',region:'us-central1',secrets:[resendApiKey]},async()=>{const jobs=await db.collection('reportJobs').where('status','==','pending').where('dueAt','<=',Timestamp.now()).limit(20).get();for(const jobDoc of jobs.docs){const job=jobDoc.data();try{const quizSnap=await db.doc(`quizzes/${job.quizId}`).get(),submissions=await db.collection('submissions').where('quizId','==',job.quizId).orderBy('createdAt','asc').get(),rows=submissions.docs.map(d=>d.data()),png=await sharp(Buffer.from(reportSvg(quizSnap.data()||{},rows))).png().toBuffer(),apiKey=resendApiKey.value();if(!apiKey)throw new Error('RESEND_API_KEY is not configured');const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.REPORT_FROM_EMAIL||'reports@your-domain.com',to:[job.email],subject:`تقرير ${quizSnap.data()?.title||''}`,html:'<p>مرفق تقرير النتائج بعد 24 ساعة.</p>',attachments:[{filename:'sahby-report.png',content:png.toString('base64')}]})});if(!response.ok)throw new Error(`Resend ${response.status}`);await jobDoc.ref.update({status:'sent',sentAt:FieldValue.serverTimestamp()});}catch(error){await jobDoc.ref.update({status:'error',lastError:String(error.message),attempts:FieldValue.increment(1)});}}});

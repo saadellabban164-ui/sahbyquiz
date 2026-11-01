@@ -5,5 +5,4 @@ Disallow: /account
 Disallow: /dashboard
 Disallow: /quiz
 Disallow: /results
-
 Sitemap: https://saadellabban164-ui.github.io/sahbyquiz/sitemap.xml
