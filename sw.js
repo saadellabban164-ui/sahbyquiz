@@ -1,5 +1,5 @@
-const CACHE = 'sahbyquiz-v7-quizfix';
-const SHELL = ['./', './index.html', './styles.css?v=20261020', './app.js?v=20261107-quizfix', './firebase-config.js', './manifest.webmanifest', './logo.png'];
+const CACHE = 'sahbyquiz-v8-linkfix';
+const SHELL = ['./', './index.html', './styles.css?v=20261020', './app.js?v=20261107-linkfix', './firebase-config.js', './manifest.webmanifest', './logo.png'];
 
 self.addEventListener('install', event => {
   self.skipWaiting();
